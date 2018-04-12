@@ -11,30 +11,50 @@ namespace genetic_alghoritm
     {
         public int health;
         public int[] Genom = new int[64];
-        public int location;
+        public Point location;
         public int pointer=0;
 
-        public Point move(int direction,int x, int y)
+        public Point getDirection(int direction,int x, int y)
         {
-            int locX = location % x;
-            int locY = location / y;
-            if (direction<3)
+            Point point = default(Point);
+            if(direction<8)
             {
-                locX += (direction-1);
-                locY--;
-
+                switch (direction)
+                {
+                    case 0:
+                        point = new Point(location.X - 1, location.Y - 1);
+                        break;
+                    case 1:
+                        point = new Point(location.X, location.Y - 1);
+                        break;
+                    case 2:
+                        point = new Point(location.X + 1, location.Y - 1);
+                        break;
+                    case 3:
+                        point = new Point(location.X - 1, location.Y);
+                        break;
+                    case 4:
+                        point = new Point(location.X + 1, location.Y);
+                        break;
+                    case 5:
+                        point = new Point(location.X - 1, location.Y + 1);
+                        break;
+                    case 6:
+                        point = new Point(location.X, location.Y + 1);
+                        break;
+                    case 7:
+                        point = new Point(location.X + 1, location.Y + 1);
+                        break;
+                }
             }
-            if(direction>4)
-            {
-                locX += (direction-6);
-                locY++;
-            }
-            if (direction == 3) { locX--; }
-            if (direction == 4) { locX++; }
-            return new Point(locX,locY);
-           
+            return point;
         }
-        public Bot(int health, int[] genom,int location)
+        public void addPointer(int add)
+        {
+            pointer += add;
+            pointer %= 64;
+        }
+        public Bot(int health, int[] genom,Point location)
         {
             this.health = health;
             Genom = genom;

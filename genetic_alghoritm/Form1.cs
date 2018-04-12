@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using System.IO;
 
 namespace genetic_alghoritm
 {
@@ -14,6 +15,8 @@ namespace genetic_alghoritm
     {
         int x = 64;
         int y = 32;
+        int livetime = 0;
+        int generation = 0;
         Bot[] bots;
         int[] sprites;
         Random rand;
@@ -28,8 +31,8 @@ namespace genetic_alghoritm
             bots = new Bot[64];
             for (int i = 0; i<64;i++)
             {
-                int loc = rand.Next(0, x*y-1);
-                bots[i] = new Bot(50,new int[64], loc);
+                Point loc = new Point(rand.Next(0,x-1),rand.Next(0,y-1));
+                bots[i] = new Bot(100,new int[64], loc);
                 for(int j= 0; j < 64;j++)
                 {
                     bots[i].Genom[j] = rand.Next(0,63);
@@ -54,6 +57,14 @@ namespace genetic_alghoritm
         private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
         {
 
+        }
+        public int isCellOcupied(Point point)
+        {
+            foreach(Bot bot in bots)
+            {
+                if (bot.location==point) { return 3; }
+            }
+            return sprites[point.Y * x + point.X];
         }
         public void draw()
         {
@@ -81,73 +92,166 @@ namespace genetic_alghoritm
                    myBuffer.Graphics.FillRectangle(brushes[sprites[j]].Brush, ((j) - x * i) * 20 + 1, i * 20 + 1, 18, 18);
                 }
             }
+            int botscount = 0;
             for (int i = 0; i < bots.Length; i++)
             {
+                if (bots[i].health <= 0) { continue; }
+                botscount++;
                 Bot bot = bots[i];
-                myBuffer.Graphics.FillRectangle(brushes[3].Brush, (bot.location % x) * 20 + 1, ((int)(bot.location / x)) * 20 + 1, 18, 18);
-                myBuffer.Graphics.DrawString(bot.health.ToString(), new Font("Consolas", 15, FontStyle.Bold, GraphicsUnit.Pixel), whitePen.Brush, new PointF((bot.location % x) * 20, ((int)bot.location / x) * 20));
+                myBuffer.Graphics.FillRectangle(brushes[3].Brush, bot.location.X*20+1, bot.location.Y*20 + 1, 18, 18);
+                myBuffer.Graphics.DrawString(bot.health.ToString(), new Font("Consolas", 15, FontStyle.Bold, GraphicsUnit.Pixel), whitePen.Brush, new Point(bot.location.X*20+1, bot.location.Y * 20 + 1));
             }
-            //myBuffer.Render();
+            if(botscount<=8)
+            {
+                Console.WriteLine("//////////////////////////////////{0}////////////////////////////////////",generation);
+                Console.WriteLine(livetime + " " + botscount);
+                livetime = 0;
+                Bot[] nbots = new Bot[64];
+                int f = 0;
+                for (int i = 0; i < bots.Length; i++)
+                {
+                    if (bots[i].health > 0)
+                    {
+                        using (FileStream stream = new FileStream("Generations\\"+generation + ".txt", FileMode.Append))
+                        {
+                            string genom = "BOT " + i + ": ";
+                            foreach (int gen in bots[i].Genom)
+                            {
+                                genom += gen + "|";
+                            }
+                            byte[] file = Encoding.ASCII.GetBytes(genom + "\n");
+                            stream.Write(file, 0, file.Length);
+                          //  Console.WriteLine(genom);
+                            stream.Close();
+                        }
+                        for (int j = 0; j < 8; j++)
+                        {
+                            
+
+                            Point loc = new Point(rand.Next(0, x - 1), rand.Next(0, y - 1));
+                            nbots[f] = new Bot(100, new int[64], loc);
+                            nbots[f].Genom = bots[i].Genom;
+                            if (j==7) { nbots[f].Genom[rand.Next(0, 63)] = rand.Next(0, 63); } 
+                            f++;
+                        }
+                    }
+                }
+                bots = nbots;
+                generation++;
+            }
+            myBuffer.Render();
             myBuffer.Render(this.CreateGraphics());
             myBuffer.Dispose();
         }
-        private void Form1_Paint(object sender, PaintEventArgs e)
+
+        private void timer1_Tick(object sender, EventArgs e)
         {
-
-            while(true)
+            for (int i = 0; i < bots.Length; i++)
             {
-                foreach(Bot bot in bots)
+                bool isEnd = true;
+                if (bots[i].health <= 0) { continue; }
+                int cmd = bots[i].Genom[bots[i].pointer];
+                //  Console.WriteLine(i + "/" + cmd);
+                if (cmd < 8)
                 {
-                    int cmd = bot.Genom[bot.pointer];
-                    if(cmd<8)
+                    Point point = bots[i].getDirection(cmd, x, y);
+                    if (point.X < 0 || point.Y < 0 || point.X >= x || point.Y >= y)
                     {
-                        Console.Write("Bot moved trying moved ");
-                        Point point = bot.move(cmd,x,y);
-                        if(point.X<0||point.Y<0||point.X>=x||point.Y>=y)
-                        {
-                            bot.pointer += 4;
-                            Console.WriteLine(".... dont moved");
-                            continue;
-                        }
-                        int nloc = point.Y * x + point.X;
-                        bool isBot = false;
-                        foreach (Bot bot1 in bots) { if (nloc==bot1.location) { isBot = true; break; } }
-                        if (isBot) { bot.pointer+=3; Console.WriteLine(".... dont moved"); continue;  }
-
-                        if (sprites[nloc] == 1) { bot.health -= 10; sprites[bot.location] = 0; sprites[rand.Next(0, x * y - 1)] = 1; bot.pointer += 1; }
-                        else if (sprites[nloc] == 2) { bot.health += 10; sprites[bot.location] = 0; sprites[rand.Next(0, x * y - 1)] = 2; bot.pointer += 2; }
-                        else { bot.pointer += 5; }
-                        bot.location = nloc;
-                        bot.health -= 10;
-                        Console.WriteLine(".... moved");
-                        Thread.Sleep(1000);
-                        draw();
+                        bots[i].addPointer(4);
+                        continue;
                     }
-                    
-                    
+                    int result = isCellOcupied(point);
+                    if (result == 0)
+                    {
+                        bots[i].addPointer(5);
+                    }
+                    else
+                    {
+                        bots[i].addPointer(result);
+                    }
+                    if (result == 1) { bots[i].health -= 20; sprites[point.Y * x + point.X] = 0; sprites[rand.Next(0, x * y - 1)] = 1; }
+                    else if (result == 2) { bots[i].health += 20; sprites[point.Y * x + point.X] = 0; sprites[rand.Next(0, x * y - 1)] = 2; }
+                    else if (result == 3)
+                    {
+                        continue;
+                    }
+                    bots[i].location = point;
+
                 }
+                else if (cmd < 16)
+                {
+                    isEnd = false;
+                    Point point = bots[i].getDirection(cmd % 8, x, y);
+                    if (point.X < 0 || point.Y < 0 || point.X >= x || point.Y >= y)
+                    {
+                        bots[i].addPointer(4);
+                        i--;
+                        continue;
+                    }
+                    int result = isCellOcupied(point);
+                    if (result == 0)
+                    {
+                        bots[i].addPointer(5);
+                    }
+                    else
+                    {
+                        bots[i].addPointer(result);
+                    }
+                }
+                else if (cmd < 32)
+                {
+                    Point point = bots[i].getDirection(cmd % 8, x, y);
+                    if (point.X < 0 || point.Y < 0 || point.X >= x || point.Y >= y)
+                    {
+                        bots[i].addPointer(4);
+                        continue;
+                    }
+                    int result = isCellOcupied(point);
+                    if (result == 0)
+                    {
+                        bots[i].addPointer(5);
+                    }
+                    else
+                    {
+                        bots[i].addPointer(result);
+                        if (result == 1) { sprites[point.Y * x + point.X] = 2; sprites[rand.Next(0, x * y - 1)] = 1; }
+                        else if (result == 2) { bots[i].health += 20; sprites[point.Y * x + point.X] = 0; sprites[rand.Next(0, x * y - 1)] = 2; }
+                    }
+                }
+                else
+                {
+                    bots[i].addPointer(cmd);
+                }
+                bots[i].health -= 10;
+                Thread.Sleep(1);
+                draw();
+                if (!isEnd) { i--; }
             }
-
-
-
-
-            //for (int i = 0; i < y; i++)
-            //{
-
-            //    for (int j = i* x; j-x*i < x; j++)
-            //    {
-            //        if (j % x == 0 || (j - (x-1)) % x == 0) { g.FillRectangle(grPen.Brush, (j - x * i) * 20 + 1, i * 20 + 1, 18, 18); g.FillRectangle(grPen.Brush, (x-1) * 20 + 1, i * 20 + 1, 18, 18); }
-            //        else if (i == 0 || i == y - 1) { g.FillRectangle(grPen.Brush, (j - x * i) * 20 + 1, i * 20 + 1, 18, 18); }
-
-            //        //g.DrawString(j.ToString(), new Font("Consolas", fnt[(int)Math.Log10(j==0?1:j)], FontStyle.Bold, GraphicsUnit.Pixel), myPen.Brush, new PointF((j - x * i) *20, i * 20));
-
-            //    }
-
-            //}
-            //for(int i = 0; i < Bot.Le)
-            //{
-
-            //}
+            livetime++;
         }
+
+
+
+
+
+
+        //for (int i = 0; i < y; i++)
+        //{
+
+        //    for (int j = i* x; j-x*i < x; j++)
+        //    {
+        //        if (j % x == 0 || (j - (x-1)) % x == 0) { g.FillRectangle(grPen.Brush, (j - x * i) * 20 + 1, i * 20 + 1, 18, 18); g.FillRectangle(grPen.Brush, (x-1) * 20 + 1, i * 20 + 1, 18, 18); }
+        //        else if (i == 0 || i == y - 1) { g.FillRectangle(grPen.Brush, (j - x * i) * 20 + 1, i * 20 + 1, 18, 18); }
+
+        //        //g.DrawString(j.ToString(), new Font("Consolas", fnt[(int)Math.Log10(j==0?1:j)], FontStyle.Bold, GraphicsUnit.Pixel), myPen.Brush, new PointF((j - x * i) *20, i * 20));
+
+        //    }
+
+        //}
+        //for(int i = 0; i < Bot.Le)
+        //{
+
+        //}
+
     }
 }
