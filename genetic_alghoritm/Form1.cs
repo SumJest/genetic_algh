@@ -28,7 +28,7 @@ namespace genetic_alghoritm
             bots = new Bot[64];
             for (int i = 0; i<64;i++)
             {
-                int loc = rand.Next(0, 63);
+                int loc = rand.Next(0, x*y-1);
                 bots[i] = new Bot(50,new int[64], loc);
                 for(int j= 0; j < 64;j++)
                 {
@@ -84,7 +84,7 @@ namespace genetic_alghoritm
             for (int i = 0; i < bots.Length; i++)
             {
                 Bot bot = bots[i];
-                myBuffer.Graphics.FillRectangle(brushes[3].Brush, (bot.location % x) * 20 + 1, ((int)bot.location / x) * 20 + 1, 18, 18);
+                myBuffer.Graphics.FillRectangle(brushes[3].Brush, (bot.location % x) * 20 + 1, ((int)(bot.location / x)) * 20 + 1, 18, 18);
                 myBuffer.Graphics.DrawString(bot.health.ToString(), new Font("Consolas", 15, FontStyle.Bold, GraphicsUnit.Pixel), whitePen.Brush, new PointF((bot.location % x) * 20, ((int)bot.location / x) * 20));
             }
             //myBuffer.Render();
@@ -98,9 +98,33 @@ namespace genetic_alghoritm
             {
                 foreach(Bot bot in bots)
                 {
-                    if (sprites[bot.location] == 1) { bot.health -= 10; sprites[bot.location] = 0; sprites[rand.Next(0, x * y - 1)] = 1; }
-                    else if (sprites[bot.location] == 2) { bot.health += 10; sprites[bot.location] = 0; sprites[rand.Next(0, x * y - 1)] = 2; }
-                    draw();
+                    int cmd = bot.Genom[bot.pointer];
+                    if(cmd<8)
+                    {
+                        Console.Write("Bot moved trying moved ");
+                        Point point = bot.move(cmd,x,y);
+                        if(point.X<0||point.Y<0||point.X>=x||point.Y>=y)
+                        {
+                            bot.pointer += 4;
+                            Console.WriteLine(".... dont moved");
+                            continue;
+                        }
+                        int nloc = point.Y * x + point.X;
+                        bool isBot = false;
+                        foreach (Bot bot1 in bots) { if (nloc==bot1.location) { isBot = true; break; } }
+                        if (isBot) { bot.pointer+=3; Console.WriteLine(".... dont moved"); continue;  }
+
+                        if (sprites[nloc] == 1) { bot.health -= 10; sprites[bot.location] = 0; sprites[rand.Next(0, x * y - 1)] = 1; bot.pointer += 1; }
+                        else if (sprites[nloc] == 2) { bot.health += 10; sprites[bot.location] = 0; sprites[rand.Next(0, x * y - 1)] = 2; bot.pointer += 2; }
+                        else { bot.pointer += 5; }
+                        bot.location = nloc;
+                        bot.health -= 10;
+                        Console.WriteLine(".... moved");
+                        Thread.Sleep(1000);
+                        draw();
+                    }
+                    
+                    
                 }
             }
 
