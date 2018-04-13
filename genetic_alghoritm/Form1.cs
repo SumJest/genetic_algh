@@ -29,14 +29,25 @@ namespace genetic_alghoritm
             InitializeComponent();
             rand = new Random();
             bots = new Bot[64];
+            StreamReader stream = new StreamReader("Generations\\GoodGeneration1.txt", Encoding.ASCII);
             for (int i = 0; i<64;i++)
             {
                 Point loc = new Point(rand.Next(0,x-1),rand.Next(0,y-1));
                 bots[i] = new Bot(100,new int[64], loc);
-                for(int j= 0; j < 64;j++)
+                for (int j = 0; j < 64; j++)
                 {
-                    bots[i].Genom[j] = rand.Next(0,63);
+                    bots[i].Genom[j] = rand.Next(0, 63);
                 }
+                if (!stream.EndOfStream)
+                {
+                    string gen = stream.ReadLine();
+                    string[] genS = gen.Split('|');
+                    for(int j = 1; j<9;j++)
+                    {
+                        bots[i].Genom[j-1] = int.Parse(genS[j]);
+                    }
+                }
+
             }
             sprites = new int[x*y];
             for(int i = 0; i<(x-1)*(y-1);i++)
@@ -105,6 +116,13 @@ namespace genetic_alghoritm
             {
                 Console.WriteLine("//////////////////////////////////{0}////////////////////////////////////",generation);
                 Console.WriteLine(livetime + " " + botscount);
+                using (FileStream stream = new FileStream("Generations\\" + generation + ".txt", FileMode.Append))
+                {
+                    byte[] file = Encoding.ASCII.GetBytes("Livetime: " + livetime+ "\n");
+                    stream.Write(file, 0, file.Length);
+                    //  Console.WriteLine(genom);
+                    stream.Close();
+                }
                 livetime = 0;
                 Bot[] nbots = new Bot[64];
                 int f = 0;
@@ -126,8 +144,6 @@ namespace genetic_alghoritm
                         }
                         for (int j = 0; j < 8; j++)
                         {
-                            
-
                             Point loc = new Point(rand.Next(0, x - 1), rand.Next(0, y - 1));
                             nbots[f] = new Bot(100, new int[64], loc);
                             nbots[f].Genom = bots[i].Genom;
@@ -163,14 +179,14 @@ namespace genetic_alghoritm
                     int result = isCellOcupied(point);
                     if (result == 0)
                     {
-                        bots[i].addPointer(5);
+                        bots[i].addPointer(6);
                     }
                     else
                     {
                         bots[i].addPointer(result);
                     }
-                    if (result == 1) { bots[i].health -= 20; sprites[point.Y * x + point.X] = 0; sprites[rand.Next(0, x * y - 1)] = 1; }
-                    else if (result == 2) { bots[i].health += 20; sprites[point.Y * x + point.X] = 0; sprites[rand.Next(0, x * y - 1)] = 2; }
+                    if (result == 1) {  sprites[point.Y * x + point.X] = 0; if (bots[i].Damage(20) == 1) { sprites[point.Y * x + point.X] = 1; } if (rand.Next(0, 4) == 2) { sprites[rand.Next(0, x * y - 1)] = 1; } }
+                    else if (result == 2) { bots[i].health += 30; sprites[point.Y * x + point.X] = 0; if (rand.Next(0, 4) == 2) { sprites[rand.Next(0, x * y - 1)] = 2; } }
                     else if (result == 3)
                     {
                         continue;
@@ -184,21 +200,21 @@ namespace genetic_alghoritm
                     Point point = bots[i].getDirection(cmd % 8, x, y);
                     if (point.X < 0 || point.Y < 0 || point.X >= x || point.Y >= y)
                     {
-                        bots[i].addPointer(4);
+                        bots[i].addPointer(3);
                         i--;
                         continue;
                     }
                     int result = isCellOcupied(point);
                     if (result == 0)
                     {
-                        bots[i].addPointer(5);
+                        bots[i].addPointer(6);
                     }
                     else
                     {
                         bots[i].addPointer(result);
                     }
                 }
-                else if (cmd < 32)
+                else if (cmd < 24)
                 {
                     Point point = bots[i].getDirection(cmd % 8, x, y);
                     if (point.X < 0 || point.Y < 0 || point.X >= x || point.Y >= y)
@@ -209,20 +225,27 @@ namespace genetic_alghoritm
                     int result = isCellOcupied(point);
                     if (result == 0)
                     {
-                        bots[i].addPointer(5);
+                        bots[i].addPointer(6);
                     }
                     else
                     {
                         bots[i].addPointer(result);
-                        if (result == 1) { sprites[point.Y * x + point.X] = 2; sprites[rand.Next(0, x * y - 1)] = 1; }
-                        else if (result == 2) { bots[i].health += 20; sprites[point.Y * x + point.X] = 0; sprites[rand.Next(0, x * y - 1)] = 2; }
+                        if (result == 1) { sprites[point.Y * x + point.X] = 2; if (rand.Next(0, 4) == 2) { sprites[rand.Next(0, x * y - 1)] = 1; } }
+                        else if (result == 2) { bots[i].health += 30; sprites[point.Y * x + point.X] = 0; if (rand.Next(0, 4) == 2) { sprites[rand.Next(0, x * y - 1)] = 2; } }
                     }
+                    
+                }
+                else if(cmd<32)
+                {
+                    bots[i].rangle = cmd % 8;
+                    bots[i].addPointer(1);
                 }
                 else
                 {
                     bots[i].addPointer(cmd);
                 }
-                bots[i].health -= 10;
+                Point point1 = bots[i].location;
+                if (bots[i].Damage(10) == 1) { sprites[point1.Y * x + point1.X] = 1; }
                 Thread.Sleep(1);
                 draw();
                 if (!isEnd) { i--; }
