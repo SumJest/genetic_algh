@@ -20,16 +20,20 @@ namespace genetic_alghoritm
         Bot[] bots;
         int[] sprites;
         Random rand;
-        Pen[] brushes = new Pen[4] { new Pen(Color.Black, 1), new Pen(Color.Red, 1), new Pen(Color.Green, 1), new Pen(Color.Orange, 1) };
+        Pen[] brushes = new Pen[4] { new Pen(Color.Black, 1), new Pen(Color.Red, 1), new Pen(Color.Green, 1), new Pen(Color.Orange, 1)};
         Pen myPen = new Pen(Color.Silver, 1);
         Pen grPen = new Pen(Color.Gray, 1);
         Pen whitePen = new Pen(Color.White, 1);
-        public Form1()
+        public Form1(string path)
         {
             InitializeComponent();
             rand = new Random();
             bots = new Bot[64];
-            StreamReader stream = new StreamReader("Generations\\GoodGeneration1.txt", Encoding.ASCII);
+            Console.WriteLine("Загрузка поколения...");
+            StreamReader stream = new StreamReader(path, Encoding.ASCII);
+            string live = stream.ReadLine();
+            Console.WriteLine("Загрузка выполнена. " + live);
+            int.TryParse(Path.GetFileNameWithoutExtension(path),out generation);
             for (int i = 0; i<64;i++)
             {
                 Point loc = new Point(rand.Next(0,x-1),rand.Next(0,y-1));
@@ -46,6 +50,7 @@ namespace genetic_alghoritm
                     {
                         bots[i].Genom[j-1] = int.Parse(genS[j]);
                     }
+                    Console.WriteLine(bots[i].pointer + " " + bots[i].Genom[bots[i].pointer]);
                 }
 
             }
@@ -110,7 +115,10 @@ namespace genetic_alghoritm
                 botscount++;
                 Bot bot = bots[i];
                 myBuffer.Graphics.FillRectangle(brushes[3].Brush, bot.location.X*20+1, bot.location.Y*20 + 1, 18, 18);
-                myBuffer.Graphics.DrawString(bot.health.ToString(), new Font("Consolas", 15, FontStyle.Bold, GraphicsUnit.Pixel), whitePen.Brush, new Point(bot.location.X*20+1, bot.location.Y * 20 + 1));
+            //    Point dir = bot.getDirection(bot.Genom[bot.pointer] % 8, bot.location.X, bot.location.Y);
+            //    myBuffer.Graphics.FillRectangle(new Pen(Color.Aqua, 1).Brush, dir.X * 20 + 1, dir.Y * 20 + 1, 18, 18);
+           //     myBuffer.Graphics.DrawString(bot.health.ToString(), new Font("Consolas", 15, FontStyle.Bold, GraphicsUnit.Pixel), whitePen.Brush, new Point(bot.location.X*20+1, bot.location.Y * 20 + 1));
+                myBuffer.Graphics.DrawString(bot.pointer.ToString(), new Font("Consolas", 15, FontStyle.Bold, GraphicsUnit.Pixel), whitePen.Brush, new Point(dir.X * 20 + 1, dir.Y * 20 + 1));
             }
             if(botscount<=8)
             {
@@ -135,8 +143,9 @@ namespace genetic_alghoritm
                             string genom = "BOT " + i + ": ";
                             foreach (int gen in bots[i].Genom)
                             {
-                                genom += gen + "|";
+                                genom += "|"+ gen;
                             }
+                            genom += "|";
                             byte[] file = Encoding.ASCII.GetBytes(genom + "\n");
                             stream.Write(file, 0, file.Length);
                           //  Console.WriteLine(genom);
@@ -153,6 +162,19 @@ namespace genetic_alghoritm
                     }
                 }
                 bots = nbots;
+                sprites = new int[x * y];
+                for (int i = 0; i < (x - 1) * (y - 1); i++)
+                {
+                    int temp = rand.Next(20);
+                    if (temp == 1 || temp == 2)
+                    {
+                        sprites[i] = temp;
+                    }
+                    else
+                    {
+                        sprites[i] = 0;
+                    }
+                }
                 generation++;
             }
             myBuffer.Render();
