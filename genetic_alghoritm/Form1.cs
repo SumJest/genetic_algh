@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -117,8 +113,9 @@ namespace genetic_alghoritm
                 myBuffer.Graphics.FillRectangle(brushes[3].Brush, bot.location.X*20+1, bot.location.Y*20 + 1, 18, 18);
             //    Point dir = bot.getDirection(bot.Genom[bot.pointer] % 8, bot.location.X, bot.location.Y);
             //    myBuffer.Graphics.FillRectangle(new Pen(Color.Aqua, 1).Brush, dir.X * 20 + 1, dir.Y * 20 + 1, 18, 18);
-           //     myBuffer.Graphics.DrawString(bot.health.ToString(), new Font("Consolas", 15, FontStyle.Bold, GraphicsUnit.Pixel), whitePen.Brush, new Point(bot.location.X*20+1, bot.location.Y * 20 + 1));
-                myBuffer.Graphics.DrawString(bot.pointer.ToString(), new Font("Consolas", 15, FontStyle.Bold, GraphicsUnit.Pixel), whitePen.Brush, new Point(dir.X * 20 + 1, dir.Y * 20 + 1));
+             myBuffer.Graphics.DrawString(bot.health.ToString(), new Font("Consolas", 15, FontStyle.Bold, GraphicsUnit.Pixel), whitePen.Brush, new Point(bot.location.X*20+1, bot.location.Y * 20 + 1));
+                //  myBuffer.Graphics.DrawString(bot.pointer.ToString(), new Font("Consolas", 15, FontStyle.Bold, GraphicsUnit.Pixel), whitePen.Brush, new Point(dir.X * 20 + 1, dir.Y * 20 + 1));
+                myBuffer.Graphics.FillRectangle(brushes[2].Brush, bot.getDirection(bot.rangle).X , bot.getDirection(bot.rangle).Y, 3, 3);
             }
             if(botscount<=8)
             {
@@ -192,7 +189,7 @@ namespace genetic_alghoritm
                 //  Console.WriteLine(i + "/" + cmd);
                 if (cmd < 8)
                 {
-                    Point point = bots[i].getDirection(cmd, x, y);
+                    Point point = bots[i].getDirection(cmd);
                     if (point.X < 0 || point.Y < 0 || point.X >= x || point.Y >= y)
                     {
                         bots[i].addPointer(4);
@@ -219,7 +216,7 @@ namespace genetic_alghoritm
                 else if (cmd < 16)
                 {
                     isEnd = false;
-                    Point point = bots[i].getDirection(cmd % 8, x, y);
+                    Point point = bots[i].getDirection(cmd % 8);
                     if (point.X < 0 || point.Y < 0 || point.X >= x || point.Y >= y)
                     {
                         bots[i].addPointer(3);
@@ -238,7 +235,7 @@ namespace genetic_alghoritm
                 }
                 else if (cmd < 24)
                 {
-                    Point point = bots[i].getDirection(cmd % 8, x, y);
+                    Point point = bots[i].getDirection(cmd % 8);
                     if (point.X < 0 || point.Y < 0 || point.X >= x || point.Y >= y)
                     {
                         bots[i].addPointer(4);
@@ -274,11 +271,6 @@ namespace genetic_alghoritm
             }
             livetime++;
         }
-
-
-
-
-
 
         //for (int i = 0; i < y; i++)
         //{

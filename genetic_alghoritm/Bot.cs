@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Drawing;
+﻿using System.Drawing;
 
 namespace genetic_alghoritm
 {
@@ -15,7 +10,7 @@ namespace genetic_alghoritm
         public int pointer=0;
         public int rangle = 0;
 
-        public Point getDirection(int direction,int x, int y)
+        public Point getDirection(int direction)
         {
             Point point = default(Point);
             if(direction<8)
